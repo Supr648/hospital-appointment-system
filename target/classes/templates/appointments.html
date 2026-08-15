@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Appointments</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
+        h1, h2 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #3498db; color: white; }
+        a { color: #3498db; }
+        form { margin-top: 30px; padding: 20px; background: #f4f4f4; border-radius: 8px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        select, input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { margin-top: 15px; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #219150; }
+    </style>
+</head>
+<body>
+    <a th:href="@{/}">Home</a>
+    <h1>Appointments</h1>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Time</th>
+            <th>Status</th>
+        </tr>
+        <tr th:each="appointment : ${appointments}">
+            <td th:text="${appointment.id}"></td>
+            <td th:text="${appointment.patient.name}"></td>
+            <td th:text="${appointment.doctor.name}"></td>
+            <td th:text="${appointment.appointmentTime}"></td>
+            <td th:text="${appointment.status}"></td>
+        </tr>
+    </table>
+
+    <h2>Book New Appointment</h2>
+    <form th:action="@{/appointments-page/book}" method="post">
+        <label>Patient</label>
+        <select name="patientId" required>
+            <option th:each="patient : ${patients}" th:value="${patient.id}" th:text="${patient.name}"></option>
+        </select>
+
+        <label>Doctor</label>
+        <select name="doctorId" required>
+            <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:text="${doctor.name}"></option>
+        </select>
+
+        <label>Appointment Time</label>
+        <input type="datetime-local" name="appointmentTime" required>
+
+        <button type="submit">Book Appointment</button>
+    </form>
+</body>
+</html>
