@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments · MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="logo">🏥</div>
+            <div>
+                <h2>MediCare</h2>
+                <span>Hospital System</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/}"><span class="nav-icon">📊</span> <span>Dashboard</span></a>
+            <a th:href="@{/doctors-page}"><span class="nav-icon">🩺</span> <span>Doctors</span></a>
+            <a th:href="@{/patients-page}"><span class="nav-icon">🧑‍⚕️</span> <span>Patients</span></a>
+            <a th:href="@{/appointments-page}" class="active"><span class="nav-icon">📅</span> <span>Appointments</span></a>
+        </nav>
+        <div class="sidebar-footer">MediCare © 2026</div>
+    </aside>
+
+    <div class="main">
+        <div class="topbar">
+            <div>
+                <h1>Appointments</h1>
+                <p class="subtitle">Book, track and manage patient visits</p>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="toast-container">
+                <div class="toast" th:if="${success}" th:text="${success}"></div>
+                <div class="error" th:if="${error}" th:text="${error}"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Appointment List</h2>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                        <div class="filter-pills">
+                            <a class="filter-pill" th:classappend="${statusFilter == null or statusFilter == ''} ? 'active'"
+                               th:href="@{/appointments-page}">All</a>
+                            <a class="filter-pill" th:classappend="${statusFilter == 'SCHEDULED'} ? 'active'"
+                               th:href="@{/appointments-page(status='SCHEDULED')}">Scheduled</a>
+                            <a class="filter-pill" th:classappend="${statusFilter == 'COMPLETED'} ? 'active'"
+                               th:href="@{/appointments-page(status='COMPLETED')}">Completed</a>
+                            <a class="filter-pill" th:classappend="${statusFilter == 'CANCELLED'} ? 'active'"
+                               th:href="@{/appointments-page(status='CANCELLED')}">Cancelled</a>
+                        </div>
+                        <form class="search-bar" th:action="@{/appointments-page}" method="get">
+                            <input type="search" name="q" th:value="${q}" placeholder="Search patient, doctor, reason…">
+                            <button type="submit">Search</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date & Time</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="appointment : ${appointments}"
+                            th:with="badgeClass=${appointment.status == 'SCHEDULED'} ? 'badge-scheduled' : (${appointment.status == 'COMPLETED'} ? 'badge-completed' : (${appointment.status == 'CANCELLED'} ? 'badge-cancelled' : 'badge-no_show'))">
+                            <td th:text="${appointment.id}"></td>
+                            <td><strong th:text="${appointment.patient.name}"></strong></td>
+                            <td>
+                                <div th:text="${appointment.doctor.name}"></div>
+                                <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${appointment.doctor.specialization}"></div>
+                            </td>
+                            <td th:text="${#temporals.format(appointment.appointmentTime, 'dd MMM yyyy, HH:mm')}"></td>
+                            <td style="font-size:0.85rem;max-width:160px" th:text="${appointment.reason != null ? appointment.reason : '—'}"></td>
+                            <td>
+                                <span class="badge" th:classappend="${badgeClass}" th:text="${appointment.status}"></span>
+                            </td>
+                            <td>
+                                <div class="row-actions" th:if="${appointment.status == 'SCHEDULED'}">
+                                    <form th:action="@{/appointments-page/status/{id}(id=${appointment.id})}" method="post">
+                                        <input type="hidden" name="status" value="COMPLETED">
+                                        <button type="submit" class="btn btn-small btn-complete">Complete</button>
+                                    </form>
+                                    <form th:action="@{/appointments-page/status/{id}(id=${appointment.id})}" method="post">
+                                        <input type="hidden" name="status" value="CANCELLED">
+                                        <button type="submit" class="btn btn-small btn-cancel">Cancel</button>
+                                    </form>
+                                    <form th:action="@{/appointments-page/status/{id}(id=${appointment.id})}" method="post">
+                                        <input type="hidden" name="status" value="NO_SHOW">
+                                        <button type="submit" class="btn btn-small btn-toggle">No-show</button>
+                                    </form>
+                                </div>
+                                <form th:action="@{/appointments-page/delete/{id}(id=${appointment.id})}" method="post"
+                                      onsubmit="return confirm('Delete this appointment record?');" style="margin-top:6px">
+                                    <button type="submit" class="btn btn-small btn-delete">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr class="empty-row" th:if="${appointments.isEmpty()}">
+                            <td colspan="7">No appointments found. Book one below.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h2>📅 Book New Appointment</h2>
+                <form th:action="@{/appointments-page/book}" method="post">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Patient *</label>
+                            <select name="patientId" required>
+                                <option value="" disabled selected>— Select patient —</option>
+                                <option th:each="patient : ${patients}" th:value="${patient.id}"
+                                        th:text="${patient.name + ' (' + patient.age + ' yrs)'}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Doctor (available only) *</label>
+                            <select name="doctorId" required>
+                                <option value="" disabled selected>— Select doctor —</option>
+                                <option th:each="doctor : ${doctors}" th:value="${doctor.id}"
+                                        th:text="${doctor.name + ' · ' + doctor.specialization}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Appointment Date & Time *</label>
+                            <input type="datetime-local" name="appointmentTime" required id="apptTime">
+                        </div>
+                        <div class="form-group">
+                            <label>Reason for visit</label>
+                            <input type="text" name="reason" placeholder="e.g. Fever, Follow-up, Checkup">
+                        </div>
+                        <div class="form-group full">
+                            <label>Notes</label>
+                            <textarea name="notes" placeholder="Optional notes for the doctor…"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit">Book Appointment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        // Set min datetime to now
+        const input = document.getElementById('apptTime');
+        if (input) {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            input.min = now.toISOString().slice(0, 16);
+        }
+    </script>
+</body>
+</html>
