@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -61,6 +61,16 @@ public class AppointmentService {
         return appointmentRepository.search(query.trim());
     }
 
+    public List<Appointment> searchAndFilter(String query, String status) {
+        String normalizedQuery = query == null || query.isBlank() ? null : query.trim();
+        String normalizedStatus = status == null || status.isBlank()
+                ? "ALL" : status.trim().toUpperCase(Locale.ROOT);
+        if (!List.of("ALL", "SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW").contains(normalizedStatus)) {
+            normalizedStatus = "ALL";
+        }
+        return appointmentRepository.searchAndFilter(normalizedQuery, normalizedStatus);
+    }
+
     public List<Appointment> findToday() {
         LocalDate today = LocalDate.now();
         return appointmentRepository.findBetween(today.atStartOfDay(), today.plusDays(1).atStartOfDay());
@@ -75,7 +85,7 @@ public class AppointmentService {
         if (time.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Appointment time cannot be in the past.");
         }
-        if (appointmentRepository.existsByDoctorIdAndAppointmentTime(doctorId, time)) {
+        if (appointmentRepository.existsByDoctorIdAndAppointmentTimeAndStatus(doctorId, time, "SCHEDULED")) {
             throw new IllegalArgumentException("This doctor already has an appointment at that time. Please choose another slot.");
         }
 
@@ -100,9 +110,29 @@ public class AppointmentService {
     }
 
     public Appointment updateStatus(Long id, String status) {
+        String normalizedStatus = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+        if (!List.of("SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW").contains(normalizedStatus)) {
+            throw new IllegalArgumentException("Choose a valid appointment status.");
+        }
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
-        appointment.setStatus(status);
+        appointment.setStatus(normalizedStatus);
+        return appointmentRepository.save(appointment);
+    }
+
+    public Appointment reschedule(Long id, LocalDateTime time) {
+        if (time == null || !time.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Appointment time must be in the future.");
+        }
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+        if (appointmentRepository.existsByDoctorIdAndAppointmentTimeAndStatusAndIdNot(
+                appointment.getDoctor().getId(), time, "SCHEDULED", id)) {
+            throw new IllegalArgumentException(
+                    "This doctor already has an appointment at that time. Please choose another slot.");
+        }
+        appointment.setAppointmentTime(time);
+        appointment.setStatus("SCHEDULED");
         return appointmentRepository.save(appointment);
     }
 

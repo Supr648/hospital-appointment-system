@@ -43,17 +43,20 @@
                     <h2>Appointment List</h2>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
                         <div class="filter-pills">
-                            <a class="filter-pill" th:classappend="${statusFilter == null or statusFilter == ''} ? 'active'"
-                               th:href="@{/appointments-page}">All</a>
+                            <a class="filter-pill" th:classappend="${statusFilter == null or statusFilter == '' or statusFilter == 'ALL'} ? 'active'"
+                               th:href="@{/appointments-page(q=${q},status='ALL')}">All</a>
                             <a class="filter-pill" th:classappend="${statusFilter == 'SCHEDULED'} ? 'active'"
-                               th:href="@{/appointments-page(status='SCHEDULED')}">Scheduled</a>
+                               th:href="@{/appointments-page(q=${q},status='SCHEDULED')}">Scheduled</a>
                             <a class="filter-pill" th:classappend="${statusFilter == 'COMPLETED'} ? 'active'"
-                               th:href="@{/appointments-page(status='COMPLETED')}">Completed</a>
+                               th:href="@{/appointments-page(q=${q},status='COMPLETED')}">Completed</a>
                             <a class="filter-pill" th:classappend="${statusFilter == 'CANCELLED'} ? 'active'"
-                               th:href="@{/appointments-page(status='CANCELLED')}">Cancelled</a>
+                               th:href="@{/appointments-page(q=${q},status='CANCELLED')}">Cancelled</a>
+                            <a class="filter-pill" th:classappend="${statusFilter == 'NO_SHOW'} ? 'active'"
+                               th:href="@{/appointments-page(q=${q},status='NO_SHOW')}">No-show</a>
                         </div>
                         <form class="search-bar" th:action="@{/appointments-page}" method="get">
                             <input type="search" name="q" th:value="${q}" placeholder="Search patient, doctor, reason…">
+                            <input type="hidden" name="status" th:value="${statusFilter}">
                             <button type="submit">Search</button>
                         </form>
                     </div>
@@ -99,6 +102,12 @@
                                         <input type="hidden" name="status" value="NO_SHOW">
                                         <button type="submit" class="btn btn-small btn-toggle">No-show</button>
                                     </form>
+                                    <form class="reschedule-form" th:action="@{/appointments-page/reschedule/{id}(id=${appointment.id})}" method="post">
+                                        <label class="visually-hidden" th:for="${'reschedule-' + appointment.id}">New appointment time</label>
+                                        <input class="reschedule-input" type="datetime-local" name="appointmentTime"
+                                               th:id="${'reschedule-' + appointment.id}" required>
+                                        <button type="submit" class="btn btn-small">Reschedule</button>
+                                    </form>
                                 </div>
                                 <form th:action="@{/appointments-page/delete/{id}(id=${appointment.id})}" method="post"
                                       onsubmit="return confirm('Delete this appointment record?');" style="margin-top:6px">
@@ -111,6 +120,35 @@
                         </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="card activity-card">
+                <div class="card-header">
+                    <div>
+                        <h2>Recent appointment activity</h2>
+                        <p class="subtitle">Booking and status history stored in MongoDB</p>
+                    </div>
+                    <span class="activity-storage" th:classappend="${activityError != null} ? ' activity-storage-error'">
+                        <span class="activity-storage-dot"></span>
+                        <span th:text="${activityError != null} ? 'MongoDB unavailable' : 'MongoDB'">MongoDB</span>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="error" th:if="${activityError}" th:text="${activityError}" role="alert"></div>
+                    <div class="activity-list" th:if="${!#lists.isEmpty(activity)}">
+                        <div class="activity-entry" th:each="event : ${activity}">
+                            <span class="activity-entry-dot"></span>
+                            <div>
+                                <strong th:text="${event.eventType}">Appointment booked</strong>
+                                <span th:text="${'Appointment #' + event.appointmentId}">Appointment #1</span>
+                            </div>
+                            <time th:text="${#temporals.format(event.occurredAt, 'dd MMM yyyy, HH:mm')}">Time</time>
+                        </div>
+                    </div>
+                    <p class="empty-row" th:if="${#lists.isEmpty(activity) and activityError == null}">
+                        No appointment activity has been recorded yet.
+                    </p>
                 </div>
             </div>
 
@@ -164,6 +202,11 @@
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             input.min = now.toISOString().slice(0, 16);
         }
+        document.querySelectorAll('.reschedule-input').forEach((rescheduleInput) => {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            rescheduleInput.min = now.toISOString().slice(0, 16);
+        });
     </script>
 </body>
 </html>

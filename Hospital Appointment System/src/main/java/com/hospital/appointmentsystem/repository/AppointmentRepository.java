@@ -9,7 +9,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
-    boolean existsByDoctorIdAndAppointmentTime(Long doctorId, LocalDateTime appointmentTime);
+    boolean existsByDoctorIdAndAppointmentTimeAndStatus(Long doctorId, LocalDateTime appointmentTime, String status);
+    boolean existsByDoctorIdAndAppointmentTimeAndStatusAndIdNot(
+            Long doctorId, LocalDateTime appointmentTime, String status, Long id);
     List<Appointment> findByStatusOrderByAppointmentTimeAsc(String status);
     List<Appointment> findAllByOrderByAppointmentTimeDesc();
     List<Appointment> findByStatus(String status);
@@ -27,4 +29,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
            "LOWER(a.status) LIKE LOWER(CONCAT('%', :q, '%')) " +
            "ORDER BY a.appointmentTime DESC")
     List<Appointment> search(@Param("q") String query);
+
+    @Query("SELECT a FROM Appointment a WHERE " +
+           "(:status IS NULL OR :status = 'ALL' OR a.status = :status) AND " +
+           "(:q IS NULL OR :q = '' OR " +
+           "LOWER(a.patient.name) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+           "LOWER(a.doctor.name) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+           "LOWER(a.doctor.specialization) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+           "LOWER(a.reason) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+           "ORDER BY a.appointmentTime DESC")
+    List<Appointment> searchAndFilter(@Param("q") String query, @Param("status") String status);
 }

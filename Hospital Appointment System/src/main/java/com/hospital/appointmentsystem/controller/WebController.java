@@ -3,16 +3,20 @@ package com.hospital.appointmentsystem.controller;
 import com.hospital.appointmentsystem.entity.Appointment;
 import com.hospital.appointmentsystem.entity.Doctor;
 import com.hospital.appointmentsystem.entity.Patient;
+import com.hospital.appointmentsystem.service.AppointmentActivityService;
 import com.hospital.appointmentsystem.service.AppointmentService;
 import com.hospital.appointmentsystem.service.DoctorService;
 import com.hospital.appointmentsystem.service.PatientService;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Locale;
 
 @Controller
 public class WebController {
@@ -20,13 +24,16 @@ public class WebController {
     private final DoctorService doctorService;
     private final PatientService patientService;
     private final AppointmentService appointmentService;
+    private final AppointmentActivityService activityService;
 
     public WebController(DoctorService doctorService,
                          PatientService patientService,
-                         AppointmentService appointmentService) {
+                         AppointmentService appointmentService,
+                         AppointmentActivityService activityService) {
         this.doctorService = doctorService;
         this.patientService = patientService;
         this.appointmentService = appointmentService;
+        this.activityService = activityService;
     }
 
     // ---------- DASHBOARD ----------
@@ -222,17 +229,23 @@ public class WebController {
     public String appointmentsPage(@RequestParam(required = false) String q,
                                    @RequestParam(required = false) String status,
                                    Model model) {
-        if (q != null && !q.isBlank()) {
-            model.addAttribute("appointments", appointmentService.search(q));
-        } else if (status != null && !status.isBlank()) {
-            model.addAttribute("appointments", appointmentService.findByStatus(status));
-        } else {
-            model.addAttribute("appointments", appointmentService.findAll());
+        String normalizedStatus = status == null || status.isBlank()
+                ? "ALL" : status.trim().toUpperCase(Locale.ROOT);
+        if (!List.of("ALL", "SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW").contains(normalizedStatus)) {
+            normalizedStatus = "ALL";
         }
+        model.addAttribute("appointments", appointmentService.searchAndFilter(q, normalizedStatus));
         model.addAttribute("doctors", doctorService.findAvailable());
         model.addAttribute("patients", patientService.findAll());
         model.addAttribute("q", q);
-        model.addAttribute("statusFilter", status);
+        model.addAttribute("statusFilter", normalizedStatus);
+        try {
+            model.addAttribute("activity", activityService.getRecentActivity());
+        } catch (DataAccessException exception) {
+            model.addAttribute("activity", List.of());
+            model.addAttribute("activityError",
+                    "MongoDB activity history is unavailable. Check the MONGODB_URI connection and try again.");
+        }
         return "appointments";
     }
 
@@ -245,11 +258,12 @@ public class WebController {
                                   RedirectAttributes ra) {
         try {
             LocalDateTime parsedTime = LocalDateTime.parse(appointmentTime);
-            appointmentService.book(patientId, doctorId, parsedTime, reason, notes);
+            Appointment appointment = appointmentService.book(patientId, doctorId, parsedTime, reason, notes);
+            recordActivity(appointment.getId(), "Appointment booked", ra);
             ra.addFlashAttribute("success", "Appointment booked successfully.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("error", e.getMessage());
-        } catch (Exception e) {
+        } catch (DateTimeParseException e) {
             ra.addFlashAttribute("error", "Could not book appointment. Check the date/time format.");
         }
         return "redirect:/appointments-page";
@@ -259,15 +273,53 @@ public class WebController {
     public String updateStatus(@PathVariable Long id,
                                @RequestParam String status,
                                RedirectAttributes ra) {
-        appointmentService.updateStatus(id, status);
-        ra.addFlashAttribute("success", "Appointment status updated to " + status + ".");
+        try {
+            Appointment appointment = appointmentService.updateStatus(id, status);
+            recordActivity(id, "Appointment " + appointment.getStatus().toLowerCase(Locale.ROOT), ra);
+            ra.addFlashAttribute("success", "Appointment status updated to " + appointment.getStatus() + ".");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/appointments-page";
+    }
+
+    @PostMapping("/appointments-page/reschedule/{id}")
+    public String rescheduleAppointment(@PathVariable Long id,
+                                        @RequestParam String appointmentTime,
+                                        RedirectAttributes ra) {
+        try {
+            LocalDateTime parsedTime = LocalDateTime.parse(appointmentTime);
+            appointmentService.reschedule(id, parsedTime);
+            recordActivity(id, "Appointment rescheduled", ra);
+            ra.addFlashAttribute("success", "Appointment rescheduled successfully.");
+        } catch (DateTimeParseException e) {
+            ra.addFlashAttribute("error", "Enter a valid appointment date and time.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/appointments-page";
     }
 
     @PostMapping("/appointments-page/delete/{id}")
     public String deleteAppointment(@PathVariable Long id, RedirectAttributes ra) {
-        appointmentService.deleteById(id);
-        ra.addFlashAttribute("success", "Appointment record deleted.");
+        try {
+            appointmentService.findById(id).orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+            appointmentService.deleteById(id);
+            recordActivity(id, "Appointment record deleted", ra);
+            ra.addFlashAttribute("success", "Appointment record deleted.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/appointments-page";
+    }
+
+    private void recordActivity(Long appointmentId, String eventType, RedirectAttributes ra) {
+        try {
+            activityService.record(appointmentId, eventType);
+        } catch (DataAccessException exception) {
+            ra.addFlashAttribute("error",
+                    "Appointment #" + appointmentId + " was changed in MySQL, but its activity "
+                            + "could not be saved in MongoDB. Check the MongoDB connection.");
+        }
     }
 }

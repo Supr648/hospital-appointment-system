@@ -1,6 +1,6 @@
 # MediCare — Hospital Appointment System
 
-A realistic full-stack hospital appointment management system built with **Spring Boot 3**, **Thymeleaf**, **JPA/H2**, and a modern animated UI.
+A realistic full-stack hospital appointment management system built with **Spring Boot 3**, **Thymeleaf**, **MySQL/JPA**, **MongoDB activity history**, and a modern animated UI.
 
 ## Features
 
@@ -8,8 +8,9 @@ A realistic full-stack hospital appointment management system built with **Sprin
 - **Dashboard** — live stats, upcoming appointments, today's schedule
 - **Doctors** — register, edit, search, toggle availability, experience & qualification
 - **Patients** — register with age, gender, blood group, address; search & edit
-- **Appointments** — book with reason/notes, filter by status, complete / cancel / no-show
-- Conflict detection (same doctor + same time)
+- **Appointments** — book with reason/notes, search and filter, reschedule, complete / cancel / no-show
+- Appointment activity history stored in MongoDB; operational records remain in MySQL
+- Conflict detection for scheduled visits (same doctor + same time)
 - Past-date validation
 - Only available doctors shown when booking
 
@@ -45,12 +46,18 @@ mvn spring-boot:run
 
 Open: **http://localhost:8080**
 
-H2 console (optional): http://localhost:8080/h2-console  
-- JDBC URL: `jdbc:h2:mem:hospitaldb`  
-- User: `sa` / password: (empty)
+The app uses the MySQL connection configured in `src/main/resources/application.properties`.
 
-### Switch to MySQL
-Edit `src/main/resources/application.properties` — comment H2 block and uncomment MySQL settings.
+### Configure MongoDB Atlas
+Set `MONGODB_URI` to your Atlas connection string. Include a database name such as `hospital_activity` in the URI path. Do not commit credentials.
+
+PowerShell:
+```powershell
+$env:MONGODB_URI = "mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/hospital_activity?retryWrites=true&w=majority"
+mvn spring-boot:run
+```
+
+For deployment, add `MONGODB_URI` as a private environment variable in the hosting provider settings. Atlas must allow network access from the deployed application.
 
 ## Sample data
 On first run, 5 doctors, 5 patients and 5 appointments are loaded automatically.
@@ -68,5 +75,5 @@ On first run, 5 doctors, 5 patients and 5 appointments are loaded automatically.
 
 ## Tech stack
 - Spring Boot 3.3 · Spring Web · Spring Data JPA · Thymeleaf · Validation
-- H2 (dev) / MySQL (prod)
+- MySQL for doctors, patients, and appointments; MongoDB for appointment activity
 - Lombok (optional) · Inter font · Pure CSS animations
