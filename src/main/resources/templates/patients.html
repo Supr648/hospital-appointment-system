@@ -2,32 +2,57 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Patients</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
-        h1 { color: #2c3e50; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #3498db; color: white; }
-        a { color: #3498db; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Patients | MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <a th:href="@{/}">Home</a>
-    <h1>Patients</h1>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-        </tr>
-        <tr th:each="patient : ${patients}">
-            <td th:text="${patient.id}"></td>
-            <td th:text="${patient.name}"></td>
-            <td th:text="${patient.email}"></td>
-            <td th:text="${patient.phone}"></td>
-        </tr>
-    </table>
+    <nav class="navbar">
+        <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
+        <div class="links">
+            <a th:href="@{/}">Overview</a>
+            <a th:href="@{/doctors-page}">Doctors</a>
+            <a th:href="@{/patients-page}" class="active">Patients</a>
+            <a th:href="@{/appointments-page}">Appointments</a>
+        </div>
+    </nav>
+    <main class="container">
+        <header class="page-heading">
+            <div><p class="eyebrow">PATIENT DIRECTORY</p><h1>Patients</h1><p class="subtitle">Manage patient contact details in one secure place.</p></div>
+            <span class="count-pill"><span th:text="${#lists.size(patients)}">0</span> patients</span>
+        </header>
+        <div class="error" th:if="${error}" th:text="${error}" role="alert"></div>
+        <section class="content-grid">
+            <div class="panel table-panel">
+                <div class="section-heading"><div><h2>Registered patients</h2><p>Patient contact information</p></div></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Patient</th><th>Email address</th><th>Phone</th></tr></thead>
+                        <tbody>
+                            <tr th:each="patient : ${patients}">
+                                <td><div class="person-cell"><span class="avatar avatar-blue" th:text="${#strings.substring(patient.name, 0, 1)}">P</span><span class="person-name" th:text="${patient.name}">Patient</span></div></td>
+                                <td class="muted-cell" th:text="${patient.email}">email@example.com</td>
+                                <td class="muted-cell" th:text="${patient.phone}">Phone</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(patients)}"><td colspan="3" class="empty-state">No patients have been registered yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <aside class="panel form-panel">
+                <div class="section-heading"><div><p class="eyebrow">DIRECTORY</p><h2>Register a patient</h2><p>Add contact details for a new patient.</p></div></div>
+                <form th:action="@{/patients-page/add}" method="post">
+                    <label for="patient-name">Full name</label>
+                    <input id="patient-name" type="text" name="name" placeholder="e.g. Taylor Morgan" autocomplete="name" required>
+                    <label for="patient-email">Email address</label>
+                    <input id="patient-email" type="email" name="email" placeholder="patient@example.com" autocomplete="email" required>
+                    <label for="patient-phone">Phone number</label>
+                    <input id="patient-phone" type="tel" name="phone" placeholder="e.g. +1 555 0100" autocomplete="tel" required>
+                    <button class="button" type="submit">Add patient <span aria-hidden="true">→</span></button>
+                </form>
+            </aside>
+        </section>
+        <footer class="footer">MediCare <span>·</span> Hospital management made simpler</footer>
+    </main>
 </body>
 </html>

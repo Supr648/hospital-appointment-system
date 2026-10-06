@@ -2,18 +2,88 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Hospital Appointment System</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 60px auto; text-align: center; }
-        h1 { color: #2c3e50; }
-        a { display: inline-block; margin: 10px; padding: 12px 24px; background: #3498db; color: white; text-decoration: none; border-radius: 6px; }
-        a:hover { background: #2980b9; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f8fc">
+    <title>Overview | MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <h1>Hospital Appointment System</h1>
-    <a th:href="@{/doctors-page}">Doctors</a>
-    <a th:href="@{/patients-page}">Patients</a>
-    <a th:href="@{/appointments-page}">Appointments</a>
+    <nav class="navbar">
+        <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
+        <div class="links">
+            <a th:href="@{/}" class="active">Overview</a>
+            <a th:href="@{/doctors-page}">Doctors</a>
+            <a th:href="@{/patients-page}">Patients</a>
+            <a th:href="@{/appointments-page}">Appointments</a>
+        </div>
+    </nav>
+
+    <main class="container dashboard">
+        <section class="welcome">
+            <div>
+                <p class="eyebrow">HOSPITAL MANAGEMENT</p>
+                <h1>Good care starts with a clear view.</h1>
+                <p class="subtitle">Keep your care team, patient directory, and appointments organized in one place.</p>
+            </div>
+            <a class="button button-light" th:href="@{/appointments-page}"><span aria-hidden="true">+</span> Schedule an appointment</a>
+        </section>
+
+        <section class="stats-grid" aria-label="System overview">
+            <a class="stat-card" th:href="@{/doctors-page}">
+                <span class="stat-icon icon-teal">DR</span>
+                <span class="stat-label">Medical team</span>
+                <strong class="stat-number" th:text="${doctorCount}">0</strong>
+                <span class="stat-foot">Registered doctors <span aria-hidden="true">→</span></span>
+            </a>
+            <a class="stat-card" th:href="@{/patients-page}">
+                <span class="stat-icon icon-blue">PT</span>
+                <span class="stat-label">Patient directory</span>
+                <strong class="stat-number" th:text="${patientCount}">0</strong>
+                <span class="stat-foot">Registered patients <span aria-hidden="true">→</span></span>
+            </a>
+            <a class="stat-card" th:href="@{/appointments-page}">
+                <span class="stat-icon icon-violet">AP</span>
+                <span class="stat-label">Appointments</span>
+                <strong class="stat-number" th:text="${appointmentCount}">0</strong>
+                <span class="stat-foot">All scheduled visits <span aria-hidden="true">→</span></span>
+            </a>
+        </section>
+
+        <section class="dashboard-bottom">
+            <div class="panel intro-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">GET STARTED</p>
+                        <h2>Your workspace</h2>
+                    </div>
+                </div>
+                <div class="quick-links">
+                    <a class="quick-link" th:href="@{/doctors-page}">
+                        <span class="quick-icon icon-teal">01</span>
+                        <span><strong>Manage your medical team</strong><small>Add doctors and keep specialities up to date.</small></span>
+                        <span class="arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="quick-link" th:href="@{/patients-page}">
+                        <span class="quick-icon icon-blue">02</span>
+                        <span><strong>Open the patient directory</strong><small>Find and register patient contact details.</small></span>
+                        <span class="arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="quick-link" th:href="@{/appointments-page}">
+                        <span class="quick-icon icon-violet">03</span>
+                        <span><strong>Coordinate appointments</strong><small>Schedule visits and review recent activity.</small></span>
+                        <span class="arrow" aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </div>
+            <aside class="panel note-panel">
+                <div class="note-symbol" aria-hidden="true">+</div>
+                <p class="eyebrow">BUILT FOR YOUR WORKFLOW</p>
+                <h2>Everything in its place.</h2>
+                <p>Patient, doctor, and appointment records are managed together so your team can focus on providing great care.</p>
+                <a class="text-link" th:href="@{/appointments-page}">View appointments <span aria-hidden="true">→</span></a>
+            </aside>
+        </section>
+        <footer class="footer">MediCare <span>·</span> Hospital management made simpler</footer>
+    </main>
 </body>
 </html>

@@ -2,32 +2,57 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Doctors</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
-        h1 { color: #2c3e50; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #3498db; color: white; }
-        a { color: #3498db; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Doctors | MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <a th:href="@{/}">Home</a>
-    <h1>Doctors</h1>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Specialization</th>
-            <th>Email</th>
-        </tr>
-        <tr th:each="doctor : ${doctors}">
-            <td th:text="${doctor.id}"></td>
-            <td th:text="${doctor.name}"></td>
-            <td th:text="${doctor.specialization}"></td>
-            <td th:text="${doctor.email}"></td>
-        </tr>
-    </table>
+    <nav class="navbar">
+        <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
+        <div class="links">
+            <a th:href="@{/}">Overview</a>
+            <a th:href="@{/doctors-page}" class="active">Doctors</a>
+            <a th:href="@{/patients-page}">Patients</a>
+            <a th:href="@{/appointments-page}">Appointments</a>
+        </div>
+    </nav>
+    <main class="container">
+        <header class="page-heading">
+            <div><p class="eyebrow">YOUR CARE TEAM</p><h1>Doctors</h1><p class="subtitle">Manage your medical professionals and their specialities.</p></div>
+            <span class="count-pill"><span th:text="${#lists.size(doctors)}">0</span> doctors</span>
+        </header>
+        <div class="error" th:if="${error}" th:text="${error}" role="alert"></div>
+        <section class="content-grid">
+            <div class="panel table-panel">
+                <div class="section-heading"><div><h2>Medical team</h2><p>Doctors registered in your system</p></div></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Doctor</th><th>Speciality</th><th>Email address</th></tr></thead>
+                        <tbody>
+                            <tr th:each="doctor : ${doctors}">
+                                <td><div class="person-cell"><span class="avatar avatar-teal" th:text="${#strings.substring(doctor.name, 0, 1)}">D</span><span class="person-name" th:text="${doctor.name}">Doctor</span></div></td>
+                                <td><span class="tag" th:text="${doctor.specialization}">Speciality</span></td>
+                                <td class="muted-cell" th:text="${doctor.email}">email@example.com</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(doctors)}"><td colspan="3" class="empty-state">No doctors have been added yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <aside class="panel form-panel">
+                <div class="section-heading"><div><p class="eyebrow">DIRECTORY</p><h2>Add a doctor</h2><p>Enter the doctor's professional details.</p></div></div>
+                <form th:action="@{/doctors-page/add}" method="post">
+                    <label for="doctor-name">Full name</label>
+                    <input id="doctor-name" type="text" name="name" placeholder="e.g. Dr. Jordan Lee" autocomplete="name" required>
+                    <label for="doctor-specialization">Speciality</label>
+                    <input id="doctor-specialization" type="text" name="specialization" placeholder="e.g. Cardiology" required>
+                    <label for="doctor-email">Email address</label>
+                    <input id="doctor-email" type="email" name="email" placeholder="doctor@hospital.com" autocomplete="email" required>
+                    <button class="button" type="submit">Add doctor <span aria-hidden="true">→</span></button>
+                </form>
+            </aside>
+        </section>
+        <footer class="footer">MediCare <span>·</span> Hospital management made simpler</footer>
+    </main>
 </body>
 </html>

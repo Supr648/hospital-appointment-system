@@ -2,57 +2,118 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Appointments</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
-        h1, h2 { color: #2c3e50; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #3498db; color: white; }
-        a { color: #3498db; }
-        form { margin-top: 30px; padding: 20px; background: #f4f4f4; border-radius: 8px; }
-        label { display: block; margin-top: 10px; font-weight: bold; }
-        select, input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-        button { margin-top: 15px; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; }
-        button:hover { background: #219150; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Appointments | MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <a th:href="@{/}">Home</a>
-    <h1>Appointments</h1>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Patient</th>
-            <th>Doctor</th>
-            <th>Time</th>
-            <th>Status</th>
-        </tr>
-        <tr th:each="appointment : ${appointments}">
-            <td th:text="${appointment.id}"></td>
-            <td th:text="${appointment.patient.name}"></td>
-            <td th:text="${appointment.doctor.name}"></td>
-            <td th:text="${appointment.appointmentTime}"></td>
-            <td th:text="${appointment.status}"></td>
-        </tr>
-    </table>
-
-    <h2>Book New Appointment</h2>
-    <form th:action="@{/appointments-page/book}" method="post">
-        <label>Patient</label>
-        <select name="patientId" required>
-            <option th:each="patient : ${patients}" th:value="${patient.id}" th:text="${patient.name}"></option>
-        </select>
-
-        <label>Doctor</label>
-        <select name="doctorId" required>
-            <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:text="${doctor.name}"></option>
-        </select>
-
-        <label>Appointment Time</label>
-        <input type="datetime-local" name="appointmentTime" required>
-
-        <button type="submit">Book Appointment</button>
-    </form>
+    <nav class="navbar">
+        <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
+        <div class="links">
+            <a th:href="@{/}">Overview</a>
+            <a th:href="@{/doctors-page}">Doctors</a>
+            <a th:href="@{/patients-page}">Patients</a>
+            <a th:href="@{/appointments-page}" class="active">Appointments</a>
+        </div>
+    </nav>
+    <main class="container">
+        <header class="page-heading">
+            <div><p class="eyebrow">VISIT COORDINATION</p><h1>Appointments</h1><p class="subtitle">Schedule visits and keep track of recent bookings.</p></div>
+            <span class="count-pill"><span th:text="${#lists.size(appointments)}">0</span> matching appointments</span>
+        </header>
+        <div class="error" th:if="${error}" th:text="${error}" role="alert"></div>
+        <section class="content-grid">
+            <div class="panel table-panel">
+                <div class="section-heading section-heading-tools">
+                    <div><h2>Appointment list</h2><p>Search visits, update their status, or change their time.</p></div>
+                    <form class="filter-form" th:action="@{/appointments-page}" method="get">
+                        <label class="visually-hidden" for="appointment-search">Search appointments</label>
+                        <input id="appointment-search" type="search" name="search" placeholder="Search patient or doctor" th:value="${search}">
+                        <label class="visually-hidden" for="appointment-status-filter">Filter by status</label>
+                        <select id="appointment-status-filter" name="status">
+                            <option value="ALL" th:selected="${statusFilter == 'ALL'}">All statuses</option>
+                            <option value="SCHEDULED" th:selected="${statusFilter == 'SCHEDULED'}">Scheduled</option>
+                            <option value="COMPLETED" th:selected="${statusFilter == 'COMPLETED'}">Completed</option>
+                            <option value="CANCELLED" th:selected="${statusFilter == 'CANCELLED'}">Cancelled</option>
+                        </select>
+                        <button class="button filter-button" type="submit">Apply</button>
+                    </form>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Patient</th><th>Doctor</th><th>Date &amp; time</th><th>Status</th><th>Update status</th><th>Reschedule</th><th>Cancel</th></tr></thead>
+                        <tbody>
+                            <tr th:each="appointment : ${appointments}">
+                                <td><span class="person-name" th:text="${appointment.patient.name}">Patient</span></td>
+                                <td class="muted-cell" th:text="${appointment.doctor.name}">Doctor</td>
+                                <td class="muted-cell" th:text="${#temporals.format(appointment.appointmentTime, 'MMM d, yyyy · h:mm a')}">Date</td>
+                                <td><span class="status-pill" th:classappend="${'status-' + #strings.toLowerCase(appointment.status)}" th:text="${appointment.status}">SCHEDULED</span></td>
+                                <td>
+                                    <form class="row-action-form" th:action="@{/appointments-page/status}" method="post">
+                                        <input type="hidden" name="appointmentId" th:value="${appointment.id}">
+                                        <label class="visually-hidden" th:for="${'status-' + appointment.id}">Status for appointment</label>
+                                        <select class="compact-select" name="status" th:id="${'status-' + appointment.id}">
+                                            <option value="SCHEDULED" th:selected="${appointment.status == 'SCHEDULED'}">Scheduled</option>
+                                            <option value="COMPLETED" th:selected="${appointment.status == 'COMPLETED'}">Completed</option>
+                                            <option value="CANCELLED" th:selected="${appointment.status == 'CANCELLED'}">Cancelled</option>
+                                        </select>
+                                        <button class="button row-button" type="submit">Save</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <form class="row-action-form reschedule-form" th:action="@{/appointments-page/reschedule}" method="post">
+                                        <input type="hidden" name="appointmentId" th:value="${appointment.id}">
+                                        <label class="visually-hidden" th:for="${'time-' + appointment.id}">New time for appointment</label>
+                                        <input class="compact-time" type="datetime-local" name="appointmentTime" th:id="${'time-' + appointment.id}" required>
+                                        <button class="button row-button" type="submit">Move</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <form th:if="${appointment.status != 'CANCELLED'}" th:action="@{/appointments-page/status}" method="post">
+                                        <input type="hidden" name="appointmentId" th:value="${appointment.id}">
+                                        <input type="hidden" name="status" value="CANCELLED">
+                                        <button class="button button-danger row-button" type="submit">Cancel</button>
+                                    </form>
+                                    <span class="muted-cell" th:if="${appointment.status == 'CANCELLED'}">Cancelled</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(appointments)}"><td colspan="7" class="empty-state">No appointments match these filters.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <aside class="panel form-panel">
+                <div class="section-heading"><div><p class="eyebrow">NEW VISIT</p><h2>Schedule appointment</h2><p>Choose a patient, doctor, and visit time.</p></div></div>
+                <form th:action="@{/appointments-page/book}" method="post">
+                    <label for="patient-id">Patient</label>
+                    <select id="patient-id" name="patientId" required>
+                        <option value="" disabled selected>Select a patient</option>
+                        <option th:each="patient : ${patients}" th:value="${patient.id}" th:text="${patient.name}"></option>
+                    </select>
+                    <label for="doctor-id">Doctor</label>
+                    <select id="doctor-id" name="doctorId" required>
+                        <option value="" disabled selected>Select a doctor</option>
+                        <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:text="${doctor.name + ' · ' + doctor.specialization}"></option>
+                    </select>
+                    <label for="appointment-time">Date and time</label>
+                    <input id="appointment-time" type="datetime-local" name="appointmentTime" th:attr="min=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd''T''HH:mm')}" required>
+                    <button class="button" type="submit">Schedule visit <span aria-hidden="true">→</span></button>
+                </form>
+            </aside>
+        </section>
+        <section class="panel activity-panel">
+            <div class="section-heading"><div><p class="eyebrow">MONGODB ACTIVITY</p><h2>Recent appointment activity</h2><p>Booking events are recorded separately from your MySQL records.</p></div><span class="storage-badge" th:classappend="${activityError != null} ? ' storage-badge-warning'"><span></span><span th:text="${activityError != null} ? 'Unavailable' : 'MongoDB'">MongoDB</span></span></div>
+            <p class="error activity-error" th:if="${activityError}" th:text="${activityError}" role="alert"></p>
+            <div class="activity-list" th:if="${!#lists.isEmpty(activity)}">
+                <div class="activity-row" th:each="event : ${activity}">
+                    <span class="activity-dot"></span>
+                    <span class="activity-description"><strong th:text="${event.eventType}">Appointment booked</strong><small th:text="${'Appointment #' + event.appointmentId}">Appointment #1</small></span>
+                    <time class="muted-cell" th:text="${event.occurredAt}">Time</time>
+                </div>
+            </div>
+            <p class="empty-state" th:if="${#lists.isEmpty(activity) and activityError == null}">No appointment activity has been recorded yet.</p>
+        </section>
+        <footer class="footer">MediCare <span>·</span> Hospital management made simpler</footer>
+    </main>
 </body>
 </html>
