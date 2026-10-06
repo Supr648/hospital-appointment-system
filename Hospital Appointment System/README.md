@@ -59,6 +59,18 @@ mvn spring-boot:run
 
 For deployment, add `MONGODB_URI` as a private environment variable in the hosting provider settings. Atlas must allow network access from the deployed application.
 
+### Deploy on Render
+1. Create a Render **Web Service** from `Supr648/hospital-appointment-system` and select branch `feature/medicare-ui-appointment-workflows`.
+2. Set the root directory to `Hospital Appointment System` and choose **Docker**. The included Dockerfile builds and runs the Spring Boot app.
+3. Add these environment variables in the Render service settings:
+   - `SPRING_DATASOURCE_URL` — JDBC URL for a remotely hosted MySQL database, for example `jdbc:mysql://HOST:PORT/DATABASE?sslMode=REQUIRED&serverTimezone=UTC`
+   - `SPRING_DATASOURCE_USERNAME` — MySQL username
+   - `SPRING_DATASOURCE_PASSWORD` — MySQL password
+   - `MONGODB_URI` — MongoDB Atlas connection string ending in `/hospital_activity`
+4. Deploy and check the Render **Logs** if startup fails.
+
+Render cannot connect to MySQL at `localhost` on your computer. Use a hosted MySQL database and its public host and port; for a Railway MySQL service, enable public TCP access and use the generated host and port. Keep database credentials only in Render's environment settings, never in GitHub or a committed `.env` file. The app listens on Render's `PORT` environment variable and defaults to port 8080 for local development.
+
 ## Sample data
 On first run, 5 doctors, 5 patients and 5 appointments are loaded automatically.
 
