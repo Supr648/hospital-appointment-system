@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f8fc">
+    <title>Create account | MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
+        <div class="links"><a th:href="@{/guest-demo}">Guest demo</a><a th:href="@{/login}">Sign in</a></div>
+    </nav>
+    <main class="container auth-page">
+        <section class="panel auth-card">
+            <p class="eyebrow">GET STARTED</p>
+            <h1>Create your workspace</h1>
+            <p class="subtitle">Your account gets a separate workspace for your organization's records.</p>
+            <div class="error" th:if="${error}" th:text="${error}" role="alert"></div>
+            <form th:action="@{/register}" method="post" th:object="${registrationForm}">
+                <label for="organizationName">Organization name</label>
+                <input id="organizationName" th:field="*{organizationName}" type="text" maxlength="120" autocomplete="organization" required>
+                <small class="error" th:if="${#fields.hasErrors('organizationName')}" th:errors="*{organizationName}"></small>
+                <label for="username">Work email</label>
+                <input id="username" th:field="*{username}" type="email" maxlength="190" autocomplete="email" required autofocus>
+                <small class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></small>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" minlength="12" maxlength="72" autocomplete="new-password" required aria-describedby="password-help">
+                <small id="password-help" class="form-help">Use at least 12 characters.</small>
+                <small class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+                <label for="confirmPassword">Confirm password</label>
+                <input id="confirmPassword" name="confirmPassword" type="password" minlength="12" maxlength="72" autocomplete="new-password" required>
+                <small class="error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
+                <button class="button" type="submit">Create account <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="auth-help">Already have an account? <a th:href="@{/login}">Sign in</a>.</p>
+            <p class="entry-note">Do not enter real medical or patient information on this student demo deployment.</p>
+        </section>
+        <footer class="footer"><a th:href="@{/}">← Back to MediCare</a></footer>
+    </main>
+</body>
+</html>

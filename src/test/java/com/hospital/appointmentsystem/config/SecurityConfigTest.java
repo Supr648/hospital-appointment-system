@@ -6,7 +6,9 @@ import com.hospital.appointmentsystem.repository.AppointmentRepository;
 import com.hospital.appointmentsystem.repository.DoctorRepository;
 import com.hospital.appointmentsystem.repository.PatientRepository;
 import com.hospital.appointmentsystem.service.AppointmentActivityService;
+import com.hospital.appointmentsystem.service.WorkspaceAccessService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,10 +16,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import com.hospital.appointmentsystem.entity.AppUser;
+import java.util.Optional;
 
 import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -37,6 +43,9 @@ class SecurityConfigTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @MockBean
     private DoctorRepository doctorRepository;
 
@@ -49,11 +58,26 @@ class SecurityConfigTest {
     @MockBean
     private AppointmentActivityService activityService;
 
+    @MockBean
+    private WorkspaceAccessService workspaceAccess;
+
+    @MockBean
+    private com.hospital.appointmentsystem.repository.AppUserRepository appUserRepository;
+
+    @BeforeEach
+    void configureWorkspace() {
+        when(workspaceAccess.workspaceId(anyString())).thenReturn(1L);
+        when(appUserRepository.findByUsernameIgnoreCase("deploy-admin"))
+                .thenReturn(Optional.of(new AppUser("deploy-admin",
+                        passwordEncoder.encode("test-password-with-at-least-16-chars"),
+                        "Test hospital", true)));
+    }
+
     @Test
     void publicWelcomeAndGuestDemoDoNotRequireSignIn() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Explore the demo")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Create an account")));
 
         mockMvc.perform(get("/guest-demo"))
                 .andExpect(status().isOk())
@@ -76,7 +100,7 @@ class SecurityConfigTest {
         mockMvc.perform(get("/api/appointments"))
                 .andExpect(status().isUnauthorized());
 
-        when(appointmentRepository.findAll()).thenReturn(List.of());
+        when(appointmentRepository.findAllByWorkspaceId(1L)).thenReturn(List.of());
         mockMvc.perform(get("/api/appointments")
                         .with(httpBasic("deploy-admin", "test-password-with-at-least-16-chars")))
                 .andExpect(status().isOk())

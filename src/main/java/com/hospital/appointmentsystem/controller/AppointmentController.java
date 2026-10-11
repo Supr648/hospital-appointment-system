@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.security.Principal;
+import com.hospital.appointmentsystem.service.WorkspaceAccessService;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -23,45 +25,51 @@ public class AppointmentController {
     private final DoctorRepository doctorRepository;
     private final PatientRepository patientRepository;
     private final AppointmentActivityService activityService;
+    private final WorkspaceAccessService workspaceAccess;
 
     public AppointmentController(AppointmentRepository appointmentRepository,
                                  DoctorRepository doctorRepository,
                                  PatientRepository patientRepository,
-                                 AppointmentActivityService activityService) {
+                                 AppointmentActivityService activityService,
+                                 WorkspaceAccessService workspaceAccess) {
         this.appointmentRepository = appointmentRepository;
         this.doctorRepository = doctorRepository;
         this.patientRepository = patientRepository;
         this.activityService = activityService;
+        this.workspaceAccess = workspaceAccess;
     }
 
     @GetMapping
-    public List<Appointment> getAllAppointments() {
-        return appointmentRepository.findAll();
+    public List<Appointment> getAllAppointments(Principal principal) {
+        return appointmentRepository.findAllByWorkspaceId(workspaceAccess.workspaceId(principal.getName()));
     }
 
     @PostMapping
-    public ResponseEntity<?> addAppointment(@Valid @RequestBody Appointment appointment) {
+    public ResponseEntity<?> addAppointment(@Valid @RequestBody Appointment appointment, Principal principal) {
+        Long workspaceId = workspaceAccess.workspaceId(principal.getName());
+        appointment.setId(null);
         Long patientId = appointment.getPatient().getId();
         Long doctorId = appointment.getDoctor().getId();
         if (patientId == null || doctorId == null) {
             return ResponseEntity.badRequest().body("Existing patient and doctor IDs are required.");
         }
 
-        Patient patient = patientRepository.findById(patientId).orElse(null);
+        Patient patient = patientRepository.findByIdAndWorkspaceId(patientId, workspaceId).orElse(null);
         if (patient == null) {
             return ResponseEntity.badRequest().body("Patient not found.");
         }
 
-        Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+        Doctor doctor = doctorRepository.findByIdAndWorkspaceId(doctorId, workspaceId).orElse(null);
         if (doctor == null) {
             return ResponseEntity.badRequest().body("Doctor not found.");
         }
 
         appointment.setPatient(patient);
         appointment.setDoctor(doctor);
+        appointment.setWorkspaceId(workspaceId);
         Appointment savedAppointment = appointmentRepository.save(appointment);
         try {
-            activityService.recordAppointmentBooked(savedAppointment.getId());
+            activityService.recordAppointmentBooked(savedAppointment.getId(), workspaceId);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedAppointment);
         } catch (DataAccessException exception) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)

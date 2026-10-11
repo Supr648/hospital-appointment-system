@@ -19,9 +19,10 @@
         <section class="panel auth-card">
             <p class="eyebrow">STAFF WORKSPACE</p>
             <h1>Welcome back</h1>
-            <p class="subtitle">Sign in with the account provided by your administrator.</p>
+            <p class="subtitle">Sign in to your organization's private workspace.</p>
             <div class="error" th:if="${param.error}" role="alert">Those sign-in details did not match. Please try again.</div>
             <div class="success-note" th:if="${param.logout}">You have been signed out.</div>
+            <div class="success-note" th:if="${param.registered}">Your account is ready. Sign in to open your new workspace.</div>
             <form th:action="@{/login}" method="post">
                 <label for="username">Username</label>
                 <input id="username" name="username" type="text" autocomplete="username" required autofocus>
@@ -29,7 +30,7 @@
                 <input id="password" name="password" type="password" autocomplete="current-password" required>
                 <button class="button" type="submit">Sign in <span aria-hidden="true">→</span></button>
             </form>
-            <p class="auth-help">Don’t have staff access? Contact your hospital administrator. No account is needed to <a th:href="@{/guest-demo}">preview the guest demo</a>.</p>
+            <p class="auth-help">New to MediCare? <a th:href="@{/register}">Create an account</a>. Or <a th:href="@{/guest-demo}">preview the guest demo</a>.</p>
         </section>
         <footer class="footer"><a th:href="@{/}">← Back to MediCare</a></footer>
     </main>

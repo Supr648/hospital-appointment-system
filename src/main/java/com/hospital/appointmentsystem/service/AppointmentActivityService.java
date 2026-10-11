@@ -16,15 +16,15 @@ public class AppointmentActivityService {
         this.activityRepository = activityRepository;
     }
 
-    public void recordAppointmentBooked(Long appointmentId) {
-        recordAppointmentEvent(appointmentId, "Appointment booked");
+    public void recordAppointmentBooked(Long appointmentId, Long workspaceId) {
+        recordAppointmentEvent(appointmentId, workspaceId, "Appointment booked");
     }
 
-    public void recordAppointmentEvent(Long appointmentId, String eventType) {
-        activityRepository.save(new AppointmentActivity(appointmentId, eventType, Instant.now()));
+    public void recordAppointmentEvent(Long appointmentId, Long workspaceId, String eventType) {
+        activityRepository.save(new AppointmentActivity(appointmentId, workspaceId, eventType, Instant.now()));
     }
 
-    public List<AppointmentActivity> getRecentActivity() {
-        return activityRepository.findTop10ByOrderByOccurredAtDesc();
+    public List<AppointmentActivity> getRecentActivity(Long workspaceId) {
+        return activityRepository.findTop10ByWorkspaceIdOrderByOccurredAtDesc(workspaceId);
     }
 }

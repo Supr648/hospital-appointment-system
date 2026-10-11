@@ -272,6 +272,7 @@ input:focus, select:focus { border-color: #4ba9a2; box-shadow: 0 0 0 3px rgba(7,
 .auth-card form .button { width: 100%; margin-top: 22px; }
 .auth-help { margin: 19px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; text-align: center; }
 .auth-help a { color: var(--teal-dark); font-weight: 700; }
+.form-help { display: block; margin-top: 6px; color: var(--muted); font-size: 11px; }
 .success-note { margin-bottom: 18px; padding: 12px 15px; border: 1px solid #cfe9d7; border-radius: 9px; background: #f0faf2; color: #39734a; font-size: 12px; }
 .demo-banner { display: flex; align-items: center; gap: 11px; margin-bottom: 25px; padding: 13px 16px; border: 1px solid #cfe0fa; border-radius: 9px; background: #f1f6ff; color: #456286; font-size: 12px; line-height: 1.5; }
 .demo-banner strong { flex: 0 0 auto; color: #315c9a; }

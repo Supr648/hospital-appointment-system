@@ -4,9 +4,11 @@ import com.hospital.appointmentsystem.entity.Appointment;
 import com.hospital.appointmentsystem.entity.Doctor;
 import com.hospital.appointmentsystem.entity.Patient;
 import com.hospital.appointmentsystem.repository.AppointmentRepository;
+import com.hospital.appointmentsystem.repository.AppUserRepository;
 import com.hospital.appointmentsystem.repository.DoctorRepository;
 import com.hospital.appointmentsystem.repository.PatientRepository;
 import com.hospital.appointmentsystem.service.AppointmentActivityService;
+import com.hospital.appointmentsystem.service.WorkspaceAccessService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -18,6 +20,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -52,6 +57,17 @@ class AppointmentControllerTest {
     @MockBean
     private AppointmentActivityService activityService;
 
+    @MockBean
+    private WorkspaceAccessService workspaceAccess;
+
+    @MockBean
+    private AppUserRepository appUserRepository;
+
+    @BeforeEach
+    void configureWorkspace() {
+        when(workspaceAccess.workspaceId(anyString())).thenReturn(1L);
+    }
+
     @Test
     void bookingRejectsMissingRequiredFields() throws Exception {
         mockMvc.perform(post("/api/appointments").with(user("test-admin"))
@@ -64,7 +80,7 @@ class AppointmentControllerTest {
 
     @Test
     void bookingRejectsPatientThatDoesNotExist() throws Exception {
-        when(patientRepository.findById(1L)).thenReturn(Optional.empty());
+        when(patientRepository.findByIdAndWorkspaceId(1L, 1L)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/appointments").with(user("test-admin"))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -76,9 +92,23 @@ class AppointmentControllerTest {
     }
 
     @Test
+    void bookingCannotUsePatientFromAnotherWorkspace() throws Exception {
+        when(patientRepository.findByIdAndWorkspaceId(1L, 1L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/appointments").with(user("test-admin"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validAppointmentJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Patient not found."));
+
+        verify(patientRepository).findByIdAndWorkspaceId(1L, 1L);
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
     void bookingRejectsDoctorThatDoesNotExist() throws Exception {
-        when(patientRepository.findById(1L)).thenReturn(Optional.of(new Patient()));
-        when(doctorRepository.findById(2L)).thenReturn(Optional.empty());
+        when(patientRepository.findByIdAndWorkspaceId(1L, 1L)).thenReturn(Optional.of(new Patient()));
+        when(doctorRepository.findByIdAndWorkspaceId(2L, 1L)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/appointments").with(user("test-admin"))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -108,8 +138,8 @@ class AppointmentControllerTest {
         patient.setId(1L);
         Doctor doctor = new Doctor();
         doctor.setId(2L);
-        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
-        when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+        when(patientRepository.findByIdAndWorkspaceId(1L, 1L)).thenReturn(Optional.of(patient));
+        when(doctorRepository.findByIdAndWorkspaceId(2L, 1L)).thenReturn(Optional.of(doctor));
         when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> {
             Appointment saved = invocation.getArgument(0);
             saved.setId(31L);
@@ -122,7 +152,7 @@ class AppointmentControllerTest {
                 .andExpect(status().isCreated());
 
         verify(appointmentRepository).save(any(Appointment.class));
-        verify(activityService).recordAppointmentBooked(31L);
+        verify(activityService).recordAppointmentBooked(31L, 1L);
     }
 
     private String validAppointmentJson() {

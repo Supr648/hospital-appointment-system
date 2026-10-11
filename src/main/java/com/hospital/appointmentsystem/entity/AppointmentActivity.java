@@ -19,6 +19,7 @@ public class AppointmentActivity {
     private Long id;
 
     private Long appointmentId;
+    private Long workspaceId;
     private String eventType;
     private Instant occurredAt;
 
@@ -31,8 +32,16 @@ public class AppointmentActivity {
         this.occurredAt = occurredAt;
     }
 
+    public AppointmentActivity(Long appointmentId, Long workspaceId, String eventType, Instant occurredAt) {
+        this.appointmentId = appointmentId;
+        this.workspaceId = workspaceId;
+        this.eventType = eventType;
+        this.occurredAt = occurredAt;
+    }
+
     public Long getId() { return id; }
     public Long getAppointmentId() { return appointmentId; }
+    public Long getWorkspaceId() { return workspaceId; }
     public String getEventType() { return eventType; }
     public Instant getOccurredAt() { return occurredAt; }
 }

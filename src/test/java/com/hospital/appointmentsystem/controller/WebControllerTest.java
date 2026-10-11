@@ -4,9 +4,11 @@ import com.hospital.appointmentsystem.entity.Appointment;
 import com.hospital.appointmentsystem.entity.Doctor;
 import com.hospital.appointmentsystem.entity.Patient;
 import com.hospital.appointmentsystem.repository.AppointmentRepository;
+import com.hospital.appointmentsystem.repository.AppUserRepository;
 import com.hospital.appointmentsystem.repository.DoctorRepository;
 import com.hospital.appointmentsystem.repository.PatientRepository;
 import com.hospital.appointmentsystem.service.AppointmentActivityService;
+import com.hospital.appointmentsystem.service.WorkspaceAccessService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -19,6 +21,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import static org.mockito.ArgumentMatchers.anyString;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,6 +65,17 @@ class WebControllerTest {
     @MockBean
     private AppointmentActivityService activityService;
 
+    @MockBean
+    private WorkspaceAccessService workspaceAccess;
+
+    @MockBean
+    private AppUserRepository appUserRepository;
+
+    @BeforeEach
+    void configureWorkspace() {
+        when(workspaceAccess.workspaceId(anyString())).thenReturn(1L);
+    }
+
     @Test
     void dashboardPageRenders() throws Exception {
         mockMvc.perform(get("/dashboard"))
@@ -74,16 +89,16 @@ class WebControllerTest {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("welcome"))
-                .andExpect(content().string(containsString("Explore the demo")));
+                .andExpect(content().string(containsString("Create an account")));
 
         mockMvc.perform(get("/guest-demo"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("guest-demo"))
                 .andExpect(content().string(containsString("Fictional sample data")));
 
-        verify(doctorRepository, never()).findAll();
-        verify(patientRepository, never()).findAll();
-        verify(appointmentRepository, never()).findAll();
+        verify(doctorRepository, never()).findAllByWorkspaceId(any());
+        verify(patientRepository, never()).findAllByWorkspaceId(any());
+        verify(appointmentRepository, never()).findAllByWorkspaceId(any());
     }
 
     @Test
@@ -101,7 +116,7 @@ class WebControllerTest {
 
     @Test
     void appointmentsPageRendersWhenDependenciesAreEmpty() throws Exception {
-        when(activityService.getRecentActivity()).thenReturn(List.of());
+        when(activityService.getRecentActivity(1L)).thenReturn(List.of());
 
         mockMvc.perform(get("/appointments-page"))
                 .andExpect(status().isOk())
@@ -111,7 +126,7 @@ class WebControllerTest {
 
     @Test
     void doctorFormRejectsDuplicateEmail() throws Exception {
-        when(doctorRepository.existsByEmailIgnoreCase("doctor@example.com")).thenReturn(true);
+        when(doctorRepository.existsByEmailIgnoreCaseAndWorkspaceId("doctor@example.com", 1L)).thenReturn(true);
 
         mockMvc.perform(post("/doctors-page/add").with(user("test-admin")).with(csrf())
                         .param("name", "Dr Example")
@@ -126,7 +141,7 @@ class WebControllerTest {
 
     @Test
     void patientFormRejectsDuplicateEmail() throws Exception {
-        when(patientRepository.existsByEmailIgnoreCase("patient@example.com")).thenReturn(true);
+        when(patientRepository.existsByEmailIgnoreCaseAndWorkspaceId("patient@example.com", 1L)).thenReturn(true);
 
         mockMvc.perform(post("/patients-page/add").with(user("test-admin")).with(csrf())
                         .param("name", "Taylor Example")
@@ -168,7 +183,7 @@ class WebControllerTest {
 
     @Test
     void bookingRejectsUnknownPatient() throws Exception {
-        when(patientRepository.findById(1L)).thenReturn(Optional.empty());
+        when(patientRepository.findByIdAndWorkspaceId(1L, 1L)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/appointments-page/book").with(user("test-admin")).with(csrf())
                         .param("patientId", "1")
@@ -182,8 +197,8 @@ class WebControllerTest {
 
     @Test
     void bookingRejectsUnknownDoctor() throws Exception {
-        when(patientRepository.findById(1L)).thenReturn(Optional.of(new Patient()));
-        when(doctorRepository.findById(2L)).thenReturn(Optional.empty());
+        when(patientRepository.findByIdAndWorkspaceId(1L, 1L)).thenReturn(Optional.of(new Patient()));
+        when(doctorRepository.findByIdAndWorkspaceId(2L, 1L)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/appointments-page/book").with(user("test-admin")).with(csrf())
                         .param("patientId", "1")
@@ -203,8 +218,8 @@ class WebControllerTest {
         doctor.setId(2L);
         LocalDateTime appointmentTime = LocalDateTime.now().plusDays(1).withNano(0);
 
-        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
-        when(doctorRepository.findById(2L)).thenReturn(Optional.of(doctor));
+        when(patientRepository.findByIdAndWorkspaceId(1L, 1L)).thenReturn(Optional.of(patient));
+        when(doctorRepository.findByIdAndWorkspaceId(2L, 1L)).thenReturn(Optional.of(doctor));
         when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> {
             Appointment saved = invocation.getArgument(0);
             saved.setId(17L);
@@ -223,6 +238,6 @@ class WebControllerTest {
                         && appointment.getDoctor() == doctor
                         && appointmentTime.equals(appointment.getAppointmentTime())
                         && "SCHEDULED".equals(appointment.getStatus())));
-        verify(activityService).recordAppointmentBooked(17L);
+        verify(activityService).recordAppointmentBooked(17L, 1L);
     }
 }

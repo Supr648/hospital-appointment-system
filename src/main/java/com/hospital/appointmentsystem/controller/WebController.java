@@ -4,6 +4,7 @@ import com.hospital.appointmentsystem.entity.Appointment;
 import com.hospital.appointmentsystem.entity.Doctor;
 import com.hospital.appointmentsystem.entity.Patient;
 import com.hospital.appointmentsystem.service.AppointmentActivityService;
+import com.hospital.appointmentsystem.service.WorkspaceAccessService;
 import com.hospital.appointmentsystem.repository.AppointmentRepository;
 import com.hospital.appointmentsystem.repository.DoctorRepository;
 import com.hospital.appointmentsystem.repository.PatientRepository;
@@ -20,6 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.time.LocalDateTime;
+import java.security.Principal;
 
 @Controller
 public class WebController {
@@ -28,15 +30,18 @@ public class WebController {
     private final PatientRepository patientRepository;
     private final AppointmentRepository appointmentRepository;
     private final AppointmentActivityService activityService;
+    private final WorkspaceAccessService workspaceAccess;
 
     public WebController(DoctorRepository doctorRepository,
                           PatientRepository patientRepository,
                           AppointmentRepository appointmentRepository,
-                          AppointmentActivityService activityService) {
+                          AppointmentActivityService activityService,
+                          WorkspaceAccessService workspaceAccess) {
         this.doctorRepository = doctorRepository;
         this.patientRepository = patientRepository;
         this.appointmentRepository = appointmentRepository;
         this.activityService = activityService;
+        this.workspaceAccess = workspaceAccess;
     }
 
     @GetMapping("/")
@@ -55,16 +60,17 @@ public class WebController {
     }
 
     @GetMapping("/dashboard")
-    public String home(Model model) {
-        model.addAttribute("doctorCount", doctorRepository.count());
-        model.addAttribute("patientCount", patientRepository.count());
-        model.addAttribute("appointmentCount", appointmentRepository.count());
+    public String home(Model model, Principal principal) {
+        Long workspaceId = workspaceAccess.workspaceId(principal.getName());
+        model.addAttribute("doctorCount", doctorRepository.findAllByWorkspaceId(workspaceId).size());
+        model.addAttribute("patientCount", patientRepository.findAllByWorkspaceId(workspaceId).size());
+        model.addAttribute("appointmentCount", appointmentRepository.findAllByWorkspaceId(workspaceId).size());
         return "index";
     }
 
     @GetMapping("/doctors-page")
-    public String doctorsPage(Model model) {
-        model.addAttribute("doctors", doctorRepository.findAll());
+    public String doctorsPage(Model model, Principal principal) {
+        model.addAttribute("doctors", doctorRepository.findAllByWorkspaceId(workspaceAccess.workspaceId(principal.getName())));
         return "doctors";
     }
 
@@ -72,9 +78,11 @@ public class WebController {
     public String addDoctor(@RequestParam String name,
                              @RequestParam String specialization,
                              @RequestParam String email,
+                             Principal principal,
                              Model model) {
-        if (doctorRepository.existsByEmailIgnoreCase(email)) {
-            model.addAttribute("doctors", doctorRepository.findAll());
+        Long workspaceId = workspaceAccess.workspaceId(principal.getName());
+        if (doctorRepository.existsByEmailIgnoreCaseAndWorkspaceId(email, workspaceId)) {
+            model.addAttribute("doctors", doctorRepository.findAllByWorkspaceId(workspaceId));
             model.addAttribute("error", "A doctor with this email already exists.");
             return "doctors";
         }
@@ -82,13 +90,14 @@ public class WebController {
         doctor.setName(name);
         doctor.setSpecialization(specialization);
         doctor.setEmail(email);
+        doctor.setWorkspaceId(workspaceId);
         doctorRepository.save(doctor);
         return "redirect:/doctors-page";
     }
 
     @GetMapping("/patients-page")
-    public String patientsPage(Model model) {
-        model.addAttribute("patients", patientRepository.findAll());
+    public String patientsPage(Model model, Principal principal) {
+        model.addAttribute("patients", patientRepository.findAllByWorkspaceId(workspaceAccess.workspaceId(principal.getName())));
         return "patients";
     }
 
@@ -96,9 +105,11 @@ public class WebController {
     public String addPatient(@RequestParam String name,
                               @RequestParam String email,
                               @RequestParam String phone,
+                              Principal principal,
                               Model model) {
-        if (patientRepository.existsByEmailIgnoreCase(email)) {
-            model.addAttribute("patients", patientRepository.findAll());
+        Long workspaceId = workspaceAccess.workspaceId(principal.getName());
+        if (patientRepository.existsByEmailIgnoreCaseAndWorkspaceId(email, workspaceId)) {
+            model.addAttribute("patients", patientRepository.findAllByWorkspaceId(workspaceId));
             model.addAttribute("error", "A patient with this email already exists.");
             return "patients";
         }
@@ -106,6 +117,7 @@ public class WebController {
         patient.setName(name);
         patient.setEmail(email);
         patient.setPhone(phone);
+        patient.setWorkspaceId(workspaceId);
         patientRepository.save(patient);
         return "redirect:/patients-page";
     }
@@ -113,13 +125,15 @@ public class WebController {
     @GetMapping("/appointments-page")
     public String appointmentsPage(@RequestParam(defaultValue = "") String search,
                                    @RequestParam(defaultValue = "ALL") String status,
-                                   Model model) {
+                                   Model model,
+                                   Principal principal) {
+        Long workspaceId = workspaceAccess.workspaceId(principal.getName());
         String normalizedSearch = search.trim().toLowerCase(Locale.ROOT);
         String requestedStatus = status.trim().toUpperCase(Locale.ROOT);
         String normalizedStatus = List.of("ALL", "SCHEDULED", "COMPLETED", "CANCELLED")
                 .contains(requestedStatus) ? requestedStatus : "ALL";
 
-        List<Appointment> appointments = appointmentRepository.findAll().stream()
+        List<Appointment> appointments = appointmentRepository.findAllByWorkspaceId(workspaceId).stream()
                 .filter(appointment -> normalizedStatus.equals("ALL")
                         || normalizedStatus.equalsIgnoreCase(appointment.getStatus()))
                 .filter(appointment -> normalizedSearch.isEmpty()
@@ -130,12 +144,12 @@ public class WebController {
                 .toList();
 
         model.addAttribute("appointments", appointments);
-        model.addAttribute("doctors", doctorRepository.findAll());
-        model.addAttribute("patients", patientRepository.findAll());
+        model.addAttribute("doctors", doctorRepository.findAllByWorkspaceId(workspaceId));
+        model.addAttribute("patients", patientRepository.findAllByWorkspaceId(workspaceId));
         model.addAttribute("search", search);
         model.addAttribute("statusFilter", normalizedStatus);
         try {
-            model.addAttribute("activity", activityService.getRecentActivity());
+            model.addAttribute("activity", activityService.getRecentActivity(workspaceId));
         } catch (DataAccessException exception) {
             model.addAttribute("activity", java.util.Collections.emptyList());
             model.addAttribute("activityError",
@@ -147,14 +161,16 @@ public class WebController {
     @PostMapping("/appointments-page/status")
     public String updateAppointmentStatus(@RequestParam Long appointmentId,
                                           @RequestParam String status,
+                                          Principal principal,
                                           RedirectAttributes redirectAttributes) {
+        Long workspaceId = workspaceAccess.workspaceId(principal.getName());
         String normalizedStatus = status.trim().toUpperCase(Locale.ROOT);
         if (!List.of("SCHEDULED", "COMPLETED", "CANCELLED").contains(normalizedStatus)) {
             redirectAttributes.addFlashAttribute("error", "Choose a valid appointment status.");
             return "redirect:/appointments-page";
         }
 
-        Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
+        Appointment appointment = appointmentRepository.findByIdAndWorkspaceId(appointmentId, workspaceId).orElse(null);
         if (appointment == null) {
             redirectAttributes.addFlashAttribute("error", "Appointment not found.");
             return "redirect:/appointments-page";
@@ -162,7 +178,7 @@ public class WebController {
 
         appointment.setStatus(normalizedStatus);
         appointmentRepository.save(appointment);
-        recordAppointmentActivity(appointmentId, "Appointment " + normalizedStatus.toLowerCase(Locale.ROOT),
+        recordAppointmentActivity(appointmentId, workspaceId, "Appointment " + normalizedStatus.toLowerCase(Locale.ROOT),
                 redirectAttributes);
         return "redirect:/appointments-page";
     }
@@ -170,7 +186,9 @@ public class WebController {
     @PostMapping("/appointments-page/reschedule")
     public String rescheduleAppointment(@RequestParam Long appointmentId,
                                         @RequestParam String appointmentTime,
-                                        RedirectAttributes redirectAttributes) {
+    Principal principal,
+    RedirectAttributes redirectAttributes) {
+        Long workspaceId = workspaceAccess.workspaceId(principal.getName());
         LocalDateTime parsedTime;
         try {
             parsedTime = LocalDateTime.parse(appointmentTime);
@@ -184,7 +202,7 @@ public class WebController {
             return "redirect:/appointments-page";
         }
 
-        Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
+        Appointment appointment = appointmentRepository.findByIdAndWorkspaceId(appointmentId, workspaceId).orElse(null);
         if (appointment == null) {
             redirectAttributes.addFlashAttribute("error", "Appointment not found.");
             return "redirect:/appointments-page";
@@ -193,14 +211,14 @@ public class WebController {
         appointment.setAppointmentTime(parsedTime);
         appointment.setStatus("SCHEDULED");
         appointmentRepository.save(appointment);
-        recordAppointmentActivity(appointmentId, "Appointment rescheduled", redirectAttributes);
+        recordAppointmentActivity(appointmentId, workspaceId, "Appointment rescheduled", redirectAttributes);
         return "redirect:/appointments-page";
     }
 
-    private void recordAppointmentActivity(Long appointmentId, String eventType,
+    private void recordAppointmentActivity(Long appointmentId, Long workspaceId, String eventType,
                                            RedirectAttributes redirectAttributes) {
         try {
-            activityService.recordAppointmentEvent(appointmentId, eventType);
+            activityService.recordAppointmentEvent(appointmentId, workspaceId, eventType);
         } catch (DataAccessException exception) {
             redirectAttributes.addFlashAttribute("error",
                     "Appointment #" + appointmentId + " was updated, but its activity "
@@ -212,7 +230,9 @@ public class WebController {
     public String bookAppointment(@RequestParam Long patientId,
                                    @RequestParam Long doctorId,
                                    @RequestParam String appointmentTime,
-                                   RedirectAttributes redirectAttributes) {
+    Principal principal,
+    RedirectAttributes redirectAttributes) {
+        Long workspaceId = workspaceAccess.workspaceId(principal.getName());
         LocalDateTime parsedTime;
         try {
             parsedTime = LocalDateTime.parse(appointmentTime);
@@ -226,13 +246,13 @@ public class WebController {
             return "redirect:/appointments-page";
         }
 
-        Patient patient = patientRepository.findById(patientId).orElse(null);
+        Patient patient = patientRepository.findByIdAndWorkspaceId(patientId, workspaceId).orElse(null);
         if (patient == null) {
             redirectAttributes.addFlashAttribute("error", "Selected patient was not found.");
             return "redirect:/appointments-page";
         }
 
-        Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+        Doctor doctor = doctorRepository.findByIdAndWorkspaceId(doctorId, workspaceId).orElse(null);
         if (doctor == null) {
             redirectAttributes.addFlashAttribute("error", "Selected doctor was not found.");
             return "redirect:/appointments-page";
@@ -243,9 +263,10 @@ public class WebController {
         appointment.setDoctor(doctor);
         appointment.setAppointmentTime(parsedTime);
         appointment.setStatus("SCHEDULED");
+        appointment.setWorkspaceId(workspaceId);
         Appointment savedAppointment = appointmentRepository.save(appointment);
         try {
-            activityService.recordAppointmentBooked(savedAppointment.getId());
+            activityService.recordAppointmentBooked(savedAppointment.getId(), workspaceId);
         } catch (DataAccessException exception) {
             redirectAttributes.addFlashAttribute("error",
                     "Appointment #" + savedAppointment.getId()

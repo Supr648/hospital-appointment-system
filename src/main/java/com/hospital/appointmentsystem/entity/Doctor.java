@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"workspace_id", "email"}))
 public class Doctor {
 
     @Id
@@ -19,9 +20,14 @@ public class Doctor {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Please provide a valid email address")
-    @Column(unique = true)
+    @Column
     private String email;
 
+    @Column(name = "workspace_id")
+    private Long workspaceId;
+
+    public Long getWorkspaceId() { return workspaceId; }
+    public void setWorkspaceId(Long workspaceId) { this.workspaceId = workspaceId; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

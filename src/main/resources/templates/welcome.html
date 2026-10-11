@@ -12,6 +12,7 @@
         <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
         <div class="links">
             <a th:href="@{/guest-demo}">Guest demo</a>
+            <a th:href="@{/register}">Create account</a>
             <a th:href="@{/login}">Staff sign in</a>
         </div>
     </nav>
@@ -27,20 +28,20 @@
         <section class="entry-grid" aria-label="Choose how to continue">
             <article class="panel entry-card">
                 <span class="stat-icon icon-teal">01</span>
-                <p class="eyebrow">FOR HOSPITAL STAFF</p>
-                <h2>Sign in to your workspace</h2>
-                <p class="subtitle">Access the real dashboard and manage records. Sign-in details are provided by your administrator.</p>
-                <a class="button" th:href="@{/login}">Staff sign in <span aria-hidden="true">→</span></a>
+                <p class="eyebrow">START YOUR WORKSPACE</p>
+                <h2>Create your account</h2>
+                <p class="subtitle">Set up a private workspace for your organization. Your doctors, patients, and appointments stay separate from other accounts.</p>
+                <a class="button" th:href="@{/register}">Create an account <span aria-hidden="true">→</span></a>
             </article>
             <article class="panel entry-card entry-card-demo">
                 <span class="stat-icon icon-blue">02</span>
-                <p class="eyebrow">JUST LOOKING?</p>
-                <h2>Explore as a guest</h2>
-                <p class="subtitle">Preview a read-only sample dashboard. It uses fictional examples and never shows or changes real records.</p>
-                <a class="button button-light" th:href="@{/guest-demo}">Explore the demo <span aria-hidden="true">→</span></a>
+                <p class="eyebrow">ALREADY REGISTERED?</p>
+                <h2>Sign in to your workspace</h2>
+                <p class="subtitle">Continue managing your clinic's doctors, patient directory, and appointment schedule.</p>
+                <a class="button button-light" th:href="@{/login}">Sign in <span aria-hidden="true">→</span></a>
             </article>
         </section>
-        <p class="entry-note">This demo is for preview only. Do not enter real patient or medical information.</p>
+        <p class="entry-note">A guest preview is also available. Do not enter real patient or medical information until your hosting and privacy safeguards are in place.</p>
         <footer class="footer">MediCare <span>·</span> Hospital management made simpler</footer>
     </main>
 </body>
