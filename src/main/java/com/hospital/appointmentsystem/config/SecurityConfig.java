@@ -54,9 +54,12 @@ public class SecurityConfig {
     @Order(2)
     SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/css/**", "/error").permitAll()
+                        .requestMatchers("/", "/login", "/guest-demo", "/css/**", "/error").permitAll()
                         .anyRequest().authenticated())
-                .formLogin(Customizer.withDefaults())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/dashboard", true)
+                        .permitAll())
                 .logout(logout -> logout.logoutSuccessUrl("/login?logout"));
         return http.build();
     }

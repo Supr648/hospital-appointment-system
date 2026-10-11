@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f8fc">
+    <title>Guest demo | MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
+        <div class="links">
+            <a th:href="@{/guest-demo}" class="active">Guest demo</a>
+            <a th:href="@{/login}">Staff sign in</a>
+        </div>
+    </nav>
+    <main class="container dashboard">
+        <div class="demo-banner" role="status"><strong>Guest preview</strong><span>Fictional sample data only. This read-only preview is separate from the hospital workspace.</span></div>
+        <section class="welcome">
+            <div>
+                <p class="eyebrow">SAMPLE DASHBOARD</p>
+                <h1>A quick look around MediCare.</h1>
+                <p class="subtitle">See how a team's overview can bring care coordination into one place.</p>
+            </div>
+            <a class="button" th:href="@{/login}">Staff sign in <span aria-hidden="true">→</span></a>
+        </section>
+        <section class="stats-grid" aria-label="Fictional sample overview">
+            <div class="stat-card demo-stat"><span class="stat-icon icon-teal">DR</span><span class="stat-label">Sample care team</span><strong class="stat-number">8</strong><span class="stat-foot">Fictional doctors</span></div>
+            <div class="stat-card demo-stat"><span class="stat-icon icon-blue">PT</span><span class="stat-label">Sample directory</span><strong class="stat-number">24</strong><span class="stat-foot">Fictional patients</span></div>
+            <div class="stat-card demo-stat"><span class="stat-icon icon-violet">AP</span><span class="stat-label">Sample schedule</span><strong class="stat-number">12</strong><span class="stat-foot">Fictional appointments</span></div>
+        </section>
+        <section class="panel demo-sample">
+            <div class="section-heading"><div><p class="eyebrow">PREVIEW</p><h2>Example appointment schedule</h2><p>All names and details below are fictional examples.</p></div></div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Patient</th><th>Care team</th><th>Visit</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <tr><td>Alex Morgan (sample)</td><td>Dr. Riley Chen (sample)</td><td>General consultation</td><td><span class="tag">Scheduled</span></td></tr>
+                        <tr><td>Jamie Taylor (sample)</td><td>Dr. Casey Patel (sample)</td><td>Follow-up visit</td><td><span class="tag">Confirmed</span></td></tr>
+                        <tr><td>Sam Jordan (sample)</td><td>Dr. Avery Kim (sample)</td><td>Wellness check</td><td><span class="tag">Scheduled</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <p class="entry-note">The guest preview is read-only and never connects to real patient records.</p>
+        <footer class="footer"><a th:href="@{/}">← Back to MediCare</a> <span>·</span> Hospital management made simpler</footer>
+    </main>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f8fc">
+    <title>Staff sign in | MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
+        <div class="links">
+            <a th:href="@{/guest-demo}">Guest demo</a>
+            <a th:href="@{/}">Home</a>
+        </div>
+    </nav>
+    <main class="container auth-page">
+        <section class="panel auth-card">
+            <p class="eyebrow">STAFF WORKSPACE</p>
+            <h1>Welcome back</h1>
+            <p class="subtitle">Sign in with the account provided by your administrator.</p>
+            <div class="error" th:if="${param.error}" role="alert">Those sign-in details did not match. Please try again.</div>
+            <div class="success-note" th:if="${param.logout}">You have been signed out.</div>
+            <form th:action="@{/login}" method="post">
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required>
+                <button class="button" type="submit">Sign in <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="auth-help">Don’t have staff access? Contact your hospital administrator. No account is needed to <a th:href="@{/guest-demo}">preview the guest demo</a>.</p>
+        </section>
+        <footer class="footer"><a th:href="@{/}">← Back to MediCare</a></footer>
+    </main>
+</body>
+</html>

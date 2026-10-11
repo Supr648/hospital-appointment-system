@@ -40,6 +40,21 @@ public class WebController {
     }
 
     @GetMapping("/")
+    public String welcome() {
+        return "welcome";
+    }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
+    @GetMapping("/guest-demo")
+    public String guestDemo() {
+        return "guest-demo";
+    }
+
+    @GetMapping("/dashboard")
     public String home(Model model) {
         model.addAttribute("doctorCount", doctorRepository.count());
         model.addAttribute("patientCount", patientRepository.count());

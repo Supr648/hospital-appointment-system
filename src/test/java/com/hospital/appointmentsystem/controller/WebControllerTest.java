@@ -63,10 +63,27 @@ class WebControllerTest {
 
     @Test
     void dashboardPageRenders() throws Exception {
-        mockMvc.perform(get("/"))
+        mockMvc.perform(get("/dashboard"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("index"))
                 .andExpect(content().string(containsString("Good care starts with a clear view.")));
+    }
+
+    @Test
+    void publicWelcomeAndGuestDemoRenderWithoutRealRecords() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("welcome"))
+                .andExpect(content().string(containsString("Explore the demo")));
+
+        mockMvc.perform(get("/guest-demo"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("guest-demo"))
+                .andExpect(content().string(containsString("Fictional sample data")));
+
+        verify(doctorRepository, never()).findAll();
+        verify(patientRepository, never()).findAll();
+        verify(appointmentRepository, never()).findAll();
     }
 
     @Test

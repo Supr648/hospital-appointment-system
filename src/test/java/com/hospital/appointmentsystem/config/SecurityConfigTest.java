@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(controllers = {WebController.class, AppointmentController.class})
 @Import(SecurityConfig.class)
@@ -49,10 +50,25 @@ class SecurityConfigTest {
     private AppointmentActivityService activityService;
 
     @Test
-    void browserPagesRequireSignIn() throws Exception {
+    void publicWelcomeAndGuestDemoDoNotRequireSignIn() throws Exception {
         mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Explore the demo")));
+
+        mockMvc.perform(get("/guest-demo"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Fictional sample data")));
+
+        mockMvc.perform(get("/dashboard"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("http://localhost/login"));
+    }
+
+    @Test
+    void signInPageIsPublicAndProvidesGuestOption() throws Exception {
+        mockMvc.perform(get("/login"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Guest demo")));
     }
 
     @Test
@@ -78,5 +94,10 @@ class SecurityConfigTest {
         mockMvc.perform(get("/").session((org.springframework.mock.web.MockHttpSession)
                         login.getRequest().getSession(false)))
                 .andExpect(status().isOk());
+
+        mockMvc.perform(get("/dashboard").session((org.springframework.mock.web.MockHttpSession)
+                        login.getRequest().getSession(false)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("index"));
     }
 }

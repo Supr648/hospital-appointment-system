@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f8fc">
+    <title>Welcome | MediCare</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a class="brand" th:href="@{/}"><span class="brand-mark">+</span><span>MediCare<span class="brand-sub">HOSPITAL MANAGEMENT</span></span></a>
+        <div class="links">
+            <a th:href="@{/guest-demo}">Guest demo</a>
+            <a th:href="@{/login}">Staff sign in</a>
+        </div>
+    </nav>
+    <main class="container welcome-page">
+        <section class="welcome welcome-hero">
+            <div>
+                <p class="eyebrow">HOSPITAL MANAGEMENT</p>
+                <h1>Care coordination, made clearer.</h1>
+                <p class="subtitle">A simple workspace for organizing care teams, patient records, and appointments.</p>
+            </div>
+            <span class="welcome-mark" aria-hidden="true">+</span>
+        </section>
+        <section class="entry-grid" aria-label="Choose how to continue">
+            <article class="panel entry-card">
+                <span class="stat-icon icon-teal">01</span>
+                <p class="eyebrow">FOR HOSPITAL STAFF</p>
+                <h2>Sign in to your workspace</h2>
+                <p class="subtitle">Access the real dashboard and manage records. Sign-in details are provided by your administrator.</p>
+                <a class="button" th:href="@{/login}">Staff sign in <span aria-hidden="true">→</span></a>
+            </article>
+            <article class="panel entry-card entry-card-demo">
+                <span class="stat-icon icon-blue">02</span>
+                <p class="eyebrow">JUST LOOKING?</p>
+                <h2>Explore as a guest</h2>
+                <p class="subtitle">Preview a read-only sample dashboard. It uses fictional examples and never shows or changes real records.</p>
+                <a class="button button-light" th:href="@{/guest-demo}">Explore the demo <span aria-hidden="true">→</span></a>
+            </article>
+        </section>
+        <p class="entry-note">This demo is for preview only. Do not enter real patient or medical information.</p>
+        <footer class="footer">MediCare <span>·</span> Hospital management made simpler</footer>
+    </main>
+</body>
+</html>

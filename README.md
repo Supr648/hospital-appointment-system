@@ -11,6 +11,10 @@ characters before starting the application. Browser pages use the sign-in form;
 `/api/**` endpoints require HTTP Basic authentication. Never reuse the database
 password as the application password.
 
+The public home page links staff to sign-in and visitors to a read-only demo
+containing fictional sample content. Only the configured administrator account
+can access the live dashboard; public self-registration is not enabled.
+
 Set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and
 `SPRING_DATASOURCE_PASSWORD` for your MySQL instance. Appointment activity is
 stored in the same database. Then run:
