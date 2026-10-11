@@ -58,7 +58,7 @@ public class WebController {
                              @RequestParam String specialization,
                              @RequestParam String email,
                              Model model) {
-        if (doctorRepository.findAll().stream().anyMatch(d -> d.getEmail().equalsIgnoreCase(email))) {
+        if (doctorRepository.existsByEmailIgnoreCase(email)) {
             model.addAttribute("doctors", doctorRepository.findAll());
             model.addAttribute("error", "A doctor with this email already exists.");
             return "doctors";
@@ -82,7 +82,7 @@ public class WebController {
                               @RequestParam String email,
                               @RequestParam String phone,
                               Model model) {
-        if (patientRepository.findAll().stream().anyMatch(p -> p.getEmail().equalsIgnoreCase(email))) {
+        if (patientRepository.existsByEmailIgnoreCase(email)) {
             model.addAttribute("patients", patientRepository.findAll());
             model.addAttribute("error", "A patient with this email already exists.");
             return "patients";
@@ -124,7 +124,7 @@ public class WebController {
         } catch (DataAccessException exception) {
             model.addAttribute("activity", java.util.Collections.emptyList());
             model.addAttribute("activityError",
-                    "MongoDB activity history is unavailable. Check the MONGODB_URI connection and try again.");
+                    "Appointment activity history is temporarily unavailable. Check the database connection and try again.");
         }
         return "appointments";
     }
@@ -188,8 +188,8 @@ public class WebController {
             activityService.recordAppointmentEvent(appointmentId, eventType);
         } catch (DataAccessException exception) {
             redirectAttributes.addFlashAttribute("error",
-                    "Appointment #" + appointmentId + " was updated in MySQL, but its activity "
-                            + "could not be saved in MongoDB. Check the MongoDB connection.");
+                    "Appointment #" + appointmentId + " was updated, but its activity "
+                            + "could not be saved. Check the database connection.");
         }
     }
 
@@ -197,21 +197,35 @@ public class WebController {
     public String bookAppointment(@RequestParam Long patientId,
                                    @RequestParam Long doctorId,
                                    @RequestParam String appointmentTime,
-    Model model,
-    RedirectAttributes redirectAttributes) {
-        LocalDateTime parsedTime = LocalDateTime.parse(appointmentTime);
+                                   RedirectAttributes redirectAttributes) {
+        LocalDateTime parsedTime;
+        try {
+            parsedTime = LocalDateTime.parse(appointmentTime);
+        } catch (DateTimeParseException exception) {
+            redirectAttributes.addFlashAttribute("error", "Enter a valid appointment date and time.");
+            return "redirect:/appointments-page";
+        }
 
-        if (parsedTime.isBefore(LocalDateTime.now())) {
-            model.addAttribute("appointments", appointmentRepository.findAll());
-            model.addAttribute("doctors", doctorRepository.findAll());
-            model.addAttribute("patients", patientRepository.findAll());
-            model.addAttribute("error", "Appointment time cannot be in the past.");
-            return "appointments";
+        if (!parsedTime.isAfter(LocalDateTime.now())) {
+            redirectAttributes.addFlashAttribute("error", "Appointment time must be in the future.");
+            return "redirect:/appointments-page";
+        }
+
+        Patient patient = patientRepository.findById(patientId).orElse(null);
+        if (patient == null) {
+            redirectAttributes.addFlashAttribute("error", "Selected patient was not found.");
+            return "redirect:/appointments-page";
+        }
+
+        Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+        if (doctor == null) {
+            redirectAttributes.addFlashAttribute("error", "Selected doctor was not found.");
+            return "redirect:/appointments-page";
         }
 
         Appointment appointment = new Appointment();
-        appointment.setPatient(patientRepository.findById(patientId).orElseThrow());
-        appointment.setDoctor(doctorRepository.findById(doctorId).orElseThrow());
+        appointment.setPatient(patient);
+        appointment.setDoctor(doctor);
         appointment.setAppointmentTime(parsedTime);
         appointment.setStatus("SCHEDULED");
         Appointment savedAppointment = appointmentRepository.save(appointment);
@@ -220,8 +234,8 @@ public class WebController {
         } catch (DataAccessException exception) {
             redirectAttributes.addFlashAttribute("error",
                     "Appointment #" + savedAppointment.getId()
-                            + " was saved in MySQL, but its activity record could not be saved in MongoDB. "
-                            + "Check the MongoDB connection; do not submit the appointment again.");
+                            + " was saved, but its activity record could not be saved. "
+                            + "Check the database connection; do not submit the appointment again.");
         }
         return "redirect:/appointments-page";
     }

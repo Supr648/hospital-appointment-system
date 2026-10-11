@@ -1,15 +1,22 @@
 package com.hospital.appointmentsystem.entity;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-@Document(collection = "appointment_activity")
+@Entity
+@Table(name = "appointment_activity",
+        indexes = @Index(name = "idx_appointment_activity_occurred_at", columnList = "occurred_at"))
 public class AppointmentActivity {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private Long appointmentId;
     private String eventType;
@@ -24,7 +31,7 @@ public class AppointmentActivity {
         this.occurredAt = occurredAt;
     }
 
-    public String getId() { return id; }
+    public Long getId() { return id; }
     public Long getAppointmentId() { return appointmentId; }
     public String getEventType() { return eventType; }
     public Instant getOccurredAt() { return occurredAt; }

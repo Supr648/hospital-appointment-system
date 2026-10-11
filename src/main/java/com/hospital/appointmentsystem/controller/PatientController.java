@@ -2,6 +2,7 @@ package com.hospital.appointmentsystem.controller;
 
 import com.hospital.appointmentsystem.entity.Patient;
 import com.hospital.appointmentsystem.repository.PatientRepository;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class PatientController {
     }
 
     @PostMapping
-    public Patient addPatient(@RequestBody Patient patient) {
+    public Patient addPatient(@Valid @RequestBody Patient patient) {
         return patientRepository.save(patient);
     }
 }

@@ -102,7 +102,7 @@
             </aside>
         </section>
         <section class="panel activity-panel">
-            <div class="section-heading"><div><p class="eyebrow">MONGODB ACTIVITY</p><h2>Recent appointment activity</h2><p>Booking events are recorded separately from your MySQL records.</p></div><span class="storage-badge" th:classappend="${activityError != null} ? ' storage-badge-warning'"><span></span><span th:text="${activityError != null} ? 'Unavailable' : 'MongoDB'">MongoDB</span></span></div>
+            <div class="section-heading"><div><p class="eyebrow">APPOINTMENT HISTORY</p><h2>Recent appointment activity</h2><p>Booking events are stored with your appointment records.</p></div><span class="storage-badge" th:classappend="${activityError != null} ? ' storage-badge-warning'"><span></span><span th:text="${activityError != null} ? 'Unavailable' : 'Database'">Database</span></span></div>
             <p class="error activity-error" th:if="${activityError}" th:text="${activityError}" role="alert"></p>
             <div class="activity-list" th:if="${!#lists.isEmpty(activity)}">
                 <div class="activity-row" th:each="event : ${activity}">
