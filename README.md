@@ -47,17 +47,13 @@ other machines.
 
 ## Deploy to Render
 
-The `render.yaml` Blueprint describes a Docker web service with persistent
-database storage and a generated administrator password. Push this project to
-a GitHub repository, then in Render select **New + → Blueprint**, connect that
-repository, and deploy the Blueprint. Render provisions the paid Starter web
-service and its persistent disk; review the current Render pricing before
-confirming. Copy the generated `APP_ADMIN_PASSWORD` from the service's
-environment settings after provisioning.
-
-The Render instance uses a file-backed H2 database on its persistent disk, so
-appointment and activity data survive service restarts. Keep periodic backups
-of this disk and do not downgrade to an instance type without disk support.
+The `render.yaml` Blueprint describes a free Docker web service and a generated
+administrator password. Push this project to a GitHub repository, then in
+Render select **New + → Blueprint**, connect that repository, and deploy the
+Blueprint. The free instance may sleep when idle and has no persistent disk.
+Its in-memory H2 database is temporary: appointments and activity data are
+cleared when the service restarts or redeploys. Copy the generated
+`APP_ADMIN_PASSWORD` from the service's environment settings after provisioning.
 This single-administrator starter is not a substitute for managed identity,
 access auditing, TLS configuration, or healthcare compliance review. Do not
 store real patient information until those controls are in place.

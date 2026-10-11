@@ -2,21 +2,17 @@ services:
   - type: web
     name: hospital-appointment-system
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /login
-    disk:
-      name: hospital-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: PORT
         value: "10000"
       - key: SERVER_ADDRESS
         value: "0.0.0.0"
       - key: SPRING_DATASOURCE_URL
-        value: "jdbc:h2:file:/var/data/hospitaldb;DB_CLOSE_ON_EXIT=FALSE"
+        value: "jdbc:h2:mem:hospitaldb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
       - key: SPRING_DATASOURCE_USERNAME
         value: sa
       - key: SPRING_DATASOURCE_DRIVER_CLASS_NAME
