@@ -15,8 +15,6 @@ services:
         value: "jdbc:h2:mem:hospitaldb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
       - key: SPRING_DATASOURCE_USERNAME
         value: sa
-      - key: SPRING_DATASOURCE_DRIVER_CLASS_NAME
-        value: org.h2.Driver
       - key: APP_ADMIN_USERNAME
         value: admin
       - key: APP_ADMIN_PASSWORD

@@ -7,8 +7,10 @@ workspace; a read-only guest demo is also available.
 ## Run locally
 
 Requirements: Java 17+ and Maven 3.9+. The default local configuration uses
-MySQL. Set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and
-`SPRING_DATASOURCE_PASSWORD` for a reachable database, and set
+MySQL. MySQL and PostgreSQL JDBC drivers are included; the driver is selected
+from the JDBC URL. Set `SPRING_DATASOURCE_URL`,
+`SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD` for a reachable
+database, and set
 `APP_ADMIN_USERNAME` plus a unique `APP_ADMIN_PASSWORD` of at least 16
 characters before starting the application. The configured administrator
 account is created on first startup.
@@ -57,12 +59,22 @@ other machines.
 
 ## Deploy to Render
 
-The `render.yaml` Blueprint uses a free web service and in-memory H2. Push this
-project to a GitHub repository, then in Render select **New + → Blueprint**,
-connect the repository and deployment branch, review the Blueprint, and deploy.
-The Blueprint provisions a generated `APP_ADMIN_PASSWORD` for the configured
-administrator; retrieve it from the service's environment settings and keep it
-secret. Other users can create their own accounts from the welcome page.
+The `render.yaml` Blueprint is a free demo configuration using in-memory H2.
+Push this project to a GitHub repository, then in Render select
+**New + → Blueprint**, connect the repository and deployment branch, review
+the Blueprint, and deploy. The Blueprint provisions a generated
+`APP_ADMIN_PASSWORD` for the configured administrator; retrieve it from the
+service's environment settings and keep it secret. Other users can create
+their own accounts from the welcome page.
+
+For a persistent deployment, attach a managed PostgreSQL database and set
+`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and
+`SPRING_DATASOURCE_PASSWORD` to its connection details. Keep those credentials
+in the hosting provider's secret environment settings, not in source control.
+Choose paid, non-expiring database storage and always-on web compute if the app
+must retain records and avoid free-tier spin-downs; review the provider's
+current pricing and backup/restore options before upgrading. The free Blueprint
+does not create paid resources or configure persistent storage automatically.
 
 **Important: Render Free has no persistent application disk, and this
 Blueprint's H2 database is in memory. Accounts, doctors, patients, appointments,
