@@ -286,10 +286,16 @@ input:focus, select:focus { border-color: #4ba9a2; box-shadow: 0 0 0 3px rgba(7,
 .demo-sample .tag { display: inline-flex; padding: 5px 9px; border-radius: 20px; background: #eaf6f5; color: var(--teal-dark); font-size: 10px; font-weight: 700; }
 .footer a { color: var(--teal-dark); text-decoration: none; }
 
+@media (max-width: 1040px) {
+    .content-grid { grid-template-columns: minmax(0, 1fr); }
+    .section-heading-tools { align-items: flex-start; }
+    .filter-form { width: 100%; flex-wrap: wrap; }
+    .filter-form input { flex: 1 1 220px; min-width: 0; }
+}
+
 @media (max-width: 820px) {
     .navbar { padding: 0 22px; }
     .container { padding-right: 22px; padding-left: 22px; }
-    .content-grid { grid-template-columns: minmax(0, 1.4fr) minmax(245px, .9fr); }
     .welcome-page { padding-top: 48px; }
 }
 
